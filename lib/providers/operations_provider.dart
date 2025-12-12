@@ -40,6 +40,10 @@ class DashboardMetrics {
 }
 
 class OperationsProvider extends ChangeNotifier {
+  // Constants for mock data
+  static const double _mockSalesGrowthPercentage = 8.5;
+  static const double _mockOrdersGrowthPercentage = 2.1;
+
   DashboardMetrics? _metrics;
   bool _isLoading = false;
   String? _error;
@@ -106,9 +110,9 @@ class OperationsProvider extends ChangeNotifier {
 
       _metrics = DashboardMetrics(
         totalSalesYTD: totalSales,
-        salesGrowthPercentage: 8.5, // Mock growth percentage
+        salesGrowthPercentage: _mockSalesGrowthPercentage,
         averageOrdersPerDay: avgOrdersPerDay,
-        ordersGrowthPercentage: 2.1, // Mock growth percentage
+        ordersGrowthPercentage: _mockOrdersGrowthPercentage,
         monthlySales: monthlySales,
         modelInfo: modelInfo,
         lastUpdated: DateTime.now(),

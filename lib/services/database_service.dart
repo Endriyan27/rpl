@@ -314,6 +314,24 @@ class DatabaseService {
     final now = DateTime.now();
     final random = Random();
 
+    // Price map for menu items
+    const menuPrices = {
+      1: 45000.0,
+      2: 35000.0,
+      3: 32000.0,
+      4: 42000.0,
+      5: 38000.0,
+    };
+
+    // Base quantities for menu items
+    const baseQuantities = {
+      1: 60,
+      2: 50,
+      3: 45,
+      4: 35,
+      5: 40,
+    };
+
     // Generate sales data for the past 180 days (6 months)
     for (int i = 0; i < 180; i++) {
       final date = now.subtract(Duration(days: i));
@@ -321,11 +339,7 @@ class DatabaseService {
       // Generate sales for each menu item
       for (int menuIdx = 1; menuIdx <= 5; menuIdx++) {
         // Base quantity varies by menu item
-        final baseQuantity = menuIdx == 1
-            ? 60
-            : (menuIdx == 2
-                ? 50
-                : (menuIdx == 3 ? 45 : (menuIdx == 4 ? 35 : 40)));
+        final baseQuantity = baseQuantities[menuIdx]!;
 
         // Add variance and weekend boost
         final weekendBoost = date.weekday >= 6 ? 1.3 : 1.0;
@@ -333,11 +347,7 @@ class DatabaseService {
         final quantity =
             ((baseQuantity + variance) * weekendBoost).round();
 
-        final price = menuIdx == 1
-            ? 45000.0
-            : (menuIdx == 2
-                ? 35000.0
-                : (menuIdx == 3 ? 32000.0 : (menuIdx == 4 ? 42000.0 : 38000.0)));
+        final price = menuPrices[menuIdx]!;
 
         await db.insert('sales_data', {
           'id': 'sales_${menuIdx}_${date.millisecondsSinceEpoch}',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class MetricCard extends StatelessWidget {
+  // Font size constant for value display
+  static const double _valueFontSize = 20.0;
+
   final IconData icon;
   final Color iconColor;
   final String title;
@@ -8,7 +11,7 @@ class MetricCard extends StatelessWidget {
   final String? subtitle;
   final String? growth;
   final Color? growthColor;
-  final double? trend; // New parameter for trend percentage
+  final double? trend; // Trend percentage parameter
 
   const MetricCard({
     super.key,
@@ -90,7 +93,7 @@ class MetricCard extends StatelessWidget {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: _valueFontSize, // Use constant for maintainability
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),

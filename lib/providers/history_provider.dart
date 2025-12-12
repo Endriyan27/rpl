@@ -32,6 +32,11 @@ class PredictionHistory {
 }
 
 class HistoryProvider extends ChangeNotifier {
+  // Constants for mock data generation
+  static const double _accuracyVarianceMultiplier = 0.2;
+  static const double _accuracyOffsetFactor = 0.5;
+  static const int _accuracyHashModulo = 100;
+
   List<PredictionHistory> _historyList = [];
   bool _isLoading = false;
   String? _error;
@@ -58,9 +63,13 @@ class HistoryProvider extends ChangeNotifier {
       // Create history from predictions with mock actual sales
       _historyList = predictions.map((prediction) {
         // Generate mock actual sales (within +/- 20% of predicted)
-        final variance = (prediction.predictedQuantity * 0.2);
+        final variance =
+            (prediction.predictedQuantity * _accuracyVarianceMultiplier);
         final actualSales = prediction.predictedQuantity +
-            (variance * (0.5 - (prediction.id.hashCode % 100) / 100));
+            (variance *
+                (_accuracyOffsetFactor -
+                    (prediction.id.hashCode % _accuracyHashModulo) /
+                        _accuracyHashModulo));
 
         // Calculate accuracy
         final difference =
