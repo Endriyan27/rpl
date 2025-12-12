@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 enum PredictionType { increase, decrease, stable, critical }
 
 enum PredictionReason {
@@ -60,34 +62,93 @@ class Prediction {
     'alertLevel': alertLevel,
   };
 
-  factory Prediction.fromJson(Map<String, dynamic> json) => Prediction(
-    id: json['id'],
-    menuItemId: json['menuItemId'],
-    menuItemName: json['menuItemName'],
-    type: PredictionType.values.firstWhere(
-      (t) => t.name == json['type'],
-      orElse: () => PredictionType.stable,
-    ),
-    predictedQuantity: json['predictedQuantity']?.toDouble() ?? 0.0,
-    confidenceLevel: json['confidenceLevel']?.toDouble() ?? 0.0,
-    percentageChange: json['percentageChange']?.toDouble() ?? 0.0,
-    predictionDate: DateTime.parse(json['predictionDate']),
-    targetDate: DateTime.parse(json['targetDate']),
-    reasons:
-        (json['reasons'] as List?)
-            ?.map(
+  factory Prediction.fromJson(Map<String, dynamic> json) {
+    // Handle both database format (snake_case) and JSON format (camelCase)
+    final id = json['id'] as String;
+    final menuItemId = json['menu_item_id'] ?? json['menuItemId'] as String;
+    final menuItemName =
+        json['menu_item_name'] ?? json['menuItemName'] as String;
+    final typeStr = json['type'] as String;
+    final predictedQuantity =
+        (json['predicted_quantity'] ?? json['predictedQuantity'])?.toDouble() ??
+            0.0;
+    final confidenceLevel =
+        (json['confidence_level'] ?? json['confidenceLevel'])?.toDouble() ?? 0.0;
+    final percentageChange =
+        (json['percentage_change'] ?? json['percentageChange'])?.toDouble() ??
+            0.0;
+    final predictionDate = DateTime.parse(
+        json['prediction_date'] ?? json['predictionDate']);
+    final targetDate =
+        DateTime.parse(json['target_date'] ?? json['targetDate']);
+    final description = json['description'] ?? '';
+    final isSignificant =
+        (json['is_significant'] ?? json['isSignificant']) == 1 ||
+            (json['is_significant'] ?? json['isSignificant']) == true;
+    final alertLevel = json['alert_level'] ?? json['alertLevel'];
+
+    // Parse reasons from JSON string or list
+    List<PredictionReason> reasonsList = [];
+    final reasonsData = json['reasons'];
+    if (reasonsData is String) {
+      // Parse JSON string
+      try {
+        final decoded = (jsonDecode(reasonsData) as List);
+        reasonsList = decoded
+            .map(
               (r) => PredictionReason.values.firstWhere(
                 (pr) => pr.name == r,
                 orElse: () => PredictionReason.historical,
               ),
             )
-            .toList() ??
-        [],
-    description: json['description'] ?? '',
-    rawMLOutput: Map<String, dynamic>.from(json['rawMLOutput'] ?? {}),
-    isSignificant: json['isSignificant'] ?? false,
-    alertLevel: json['alertLevel'],
-  );
+            .toList();
+      } catch (e) {
+        reasonsList = [PredictionReason.historical];
+      }
+    } else if (reasonsData is List) {
+      reasonsList = reasonsData
+          .map(
+            (r) => PredictionReason.values.firstWhere(
+              (pr) => pr.name == r,
+              orElse: () => PredictionReason.historical,
+            ),
+          )
+          .toList();
+    }
+
+    // Parse raw ML output
+    Map<String, dynamic> rawOutput = {};
+    final rawMLData = json['raw_ml_output'] ?? json['rawMLOutput'];
+    if (rawMLData is String) {
+      try {
+        rawOutput = Map<String, dynamic>.from(jsonDecode(rawMLData));
+      } catch (e) {
+        rawOutput = {};
+      }
+    } else if (rawMLData is Map) {
+      rawOutput = Map<String, dynamic>.from(rawMLData);
+    }
+
+    return Prediction(
+      id: id,
+      menuItemId: menuItemId,
+      menuItemName: menuItemName,
+      type: PredictionType.values.firstWhere(
+        (t) => t.name == typeStr,
+        orElse: () => PredictionType.stable,
+      ),
+      predictedQuantity: predictedQuantity,
+      confidenceLevel: confidenceLevel,
+      percentageChange: percentageChange,
+      predictionDate: predictionDate,
+      targetDate: targetDate,
+      reasons: reasonsList,
+      description: description,
+      rawMLOutput: rawOutput,
+      isSignificant: isSignificant,
+      alertLevel: alertLevel,
+    );
+  }
 
   String get statusColor {
     switch (type) {
