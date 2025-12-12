@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 class MetricCard extends StatelessWidget {
+  // Font size constant for value display
+  static const double _valueFontSize = 20.0;
+
   final IconData icon;
   final Color iconColor;
   final String title;
@@ -8,6 +11,7 @@ class MetricCard extends StatelessWidget {
   final String? subtitle;
   final String? growth;
   final Color? growthColor;
+  final double? trend; // Trend percentage parameter
 
   const MetricCard({
     super.key,
@@ -18,10 +22,21 @@ class MetricCard extends StatelessWidget {
     this.subtitle,
     this.growth,
     this.growthColor,
+    this.trend,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Calculate growth display from trend if provided
+    String? displayGrowth = growth;
+    Color? displayGrowthColor = growthColor;
+
+    if (trend != null) {
+      final sign = trend! >= 0 ? '+' : '';
+      displayGrowth = '$sign${trend!.toStringAsFixed(1)}%';
+      displayGrowthColor = trend! >= 0 ? const Color(0xFF00D05E) : Colors.red;
+    }
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -40,22 +55,22 @@ class MetricCard extends StatelessWidget {
                   child: Icon(icon, color: iconColor, size: 24),
                 ),
                 const Spacer(),
-                if (growth != null && growthColor != null)
+                if (displayGrowth != null && displayGrowthColor != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: growthColor!.withOpacity(0.1),
+                      color: displayGrowthColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      growth!,
+                      displayGrowth,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: growthColor,
+                        color: displayGrowthColor,
                       ),
                     ),
                   ),
@@ -74,12 +89,15 @@ class MetricCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Flexible(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: _valueFontSize, // Use constant for maintainability
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (subtitle != null) ...[

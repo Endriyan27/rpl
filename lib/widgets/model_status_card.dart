@@ -4,11 +4,15 @@ import '../models/ml_model_info.dart';
 class ModelStatusCard extends StatelessWidget {
   final MLModelInfo modelInfo;
   final VoidCallback? onTrainModel;
+  final VoidCallback? onRetrain; // Add this parameter
+  final bool isTraining; // Add this parameter
 
   const ModelStatusCard({
     super.key,
     required this.modelInfo,
     this.onTrainModel,
+    this.onRetrain,
+    this.isTraining = false,
   });
 
   @override
@@ -45,12 +49,23 @@ class ModelStatusCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    _showModelDetails(context);
-                  },
-                  child: const Text('Latih Ulang'),
-                ),
+                if (isTraining)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  TextButton(
+                    onPressed: () {
+                      if (onRetrain != null) {
+                        onRetrain!();
+                      } else if (onTrainModel != null) {
+                        onTrainModel!();
+                      }
+                    },
+                    child: const Text('Latih Ulang'),
+                  ),
               ],
             ),
 
@@ -94,9 +109,11 @@ class ModelStatusCard extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Model saat ini menggunakan 12 fitur input termasuk cuaca dan hari libur. Performa stabil.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  Expanded(
+                    child: Text(
+                      'Model saat ini menggunakan 12 fitur input termasuk cuaca dan hari libur. Performa stabil.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    ),
                   ),
                 ],
               ),
@@ -217,7 +234,11 @@ class ModelStatusCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        onTrainModel?.call();
+                        if (onRetrain != null) {
+                          onRetrain!();
+                        } else {
+                          onTrainModel?.call();
+                        }
                       },
                       child: const Text('Latih Ulang'),
                     ),

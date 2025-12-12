@@ -163,6 +163,28 @@ class DatabaseService {
         'is_active': 1,
         'created_at': DateTime.now().toIso8601String(),
       },
+      {
+        'id': 'menu_4',
+        'name': 'Salmon Teriyaki',
+        'category': 'Rice Bowl',
+        'price': 42000.0,
+        'description': 'Nasi dengan salmon teriyaki',
+        'image_path': '',
+        'ingredients': '{"salmon": 180, "rice": 200, "teriyaki_sauce": 30}',
+        'is_active': 1,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': 'menu_5',
+        'name': 'Ebi Furai',
+        'category': 'Bento',
+        'price': 38000.0,
+        'description': 'Udang goreng tepung dengan nasi',
+        'image_path': '',
+        'ingredients': '{"shrimp": 150, "rice": 200, "breadcrumbs": 50}',
+        'is_active': 1,
+        'created_at': DateTime.now().toIso8601String(),
+      },
     ];
 
     for (final item in sampleMenuItems) {
@@ -171,6 +193,9 @@ class DatabaseService {
 
     // Insert sample sales data
     await _insertSampleSalesData(db);
+
+    // Insert sample predictions
+    await _insertSamplePredictions(db);
 
     // Insert default settings
     await db.insert('app_settings', {
@@ -188,20 +213,141 @@ class DatabaseService {
     });
   }
 
+  Future<void> _insertSamplePredictions(Database db) async {
+    final now = DateTime.now();
+    final random = Random(42); // Fixed seed for consistency
+
+    // Generate predictions for the next 7 days
+    final predictions = [
+      // Significant prediction - increase
+      {
+        'id': 'pred_1_${now.millisecondsSinceEpoch}',
+        'menu_item_id': 'menu_1',
+        'menu_item_name': 'Bento Special 3',
+        'type': 'increase',
+        'predicted_quantity': 72.0,
+        'confidence_level': 0.94,
+        'percentage_change': 20.0,
+        'prediction_date': now.toIso8601String(),
+        'target_date': now.add(const Duration(days: 1)).toIso8601String(),
+        'reasons': '["localEvent", "trend"]',
+        'description':
+            'Diprediksi naik 20.0% pada besok karena faktor positif',
+        'raw_ml_output': '{"predicted_quantity": 72.0, "confidence": 0.94}',
+        'is_significant': 1,
+        'alert_level': null,
+      },
+      // Significant prediction - decrease
+      {
+        'id': 'pred_2_${now.millisecondsSinceEpoch}',
+        'menu_item_id': 'menu_2',
+        'menu_item_name': 'Beef Teriyaki',
+        'type': 'decrease',
+        'predicted_quantity': 38.0,
+        'confidence_level': 0.89,
+        'percentage_change': -18.0,
+        'prediction_date': now.toIso8601String(),
+        'target_date': now.add(const Duration(days: 1)).toIso8601String(),
+        'reasons': '["stockIssue", "weather"]',
+        'description': 'Diprediksi turun 18.0% pada besok',
+        'raw_ml_output': '{"predicted_quantity": 38.0, "confidence": 0.89}',
+        'is_significant': 1,
+        'alert_level': 'warning',
+      },
+      // Normal predictions
+      {
+        'id': 'pred_3_${now.millisecondsSinceEpoch}',
+        'menu_item_id': 'menu_3',
+        'menu_item_name': 'Chicken Katsu',
+        'type': 'stable',
+        'predicted_quantity': 47.0,
+        'confidence_level': 0.91,
+        'percentage_change': 4.4,
+        'prediction_date': now.toIso8601String(),
+        'target_date': now.add(const Duration(days: 1)).toIso8601String(),
+        'reasons': '["historical"]',
+        'description': 'Penjualan stabil dengan sedikit peningkatan',
+        'raw_ml_output': '{"predicted_quantity": 47.0, "confidence": 0.91}',
+        'is_significant': 0,
+        'alert_level': null,
+      },
+      {
+        'id': 'pred_4_${now.millisecondsSinceEpoch}',
+        'menu_item_id': 'menu_4',
+        'menu_item_name': 'Salmon Teriyaki',
+        'type': 'stable',
+        'predicted_quantity': 38.0,
+        'confidence_level': 0.88,
+        'percentage_change': 8.6,
+        'prediction_date': now.toIso8601String(),
+        'target_date': now.add(const Duration(days: 1)).toIso8601String(),
+        'reasons': '["historical", "trend"]',
+        'description': 'Penjualan stabil dengan sedikit peningkatan',
+        'raw_ml_output': '{"predicted_quantity": 38.0, "confidence": 0.88}',
+        'is_significant': 0,
+        'alert_level': null,
+      },
+      {
+        'id': 'pred_5_${now.millisecondsSinceEpoch}',
+        'menu_item_id': 'menu_5',
+        'menu_item_name': 'Ebi Furai',
+        'type': 'stable',
+        'predicted_quantity': 43.0,
+        'confidence_level': 0.90,
+        'percentage_change': 7.5,
+        'prediction_date': now.toIso8601String(),
+        'target_date': now.add(const Duration(days: 1)).toIso8601String(),
+        'reasons': '["historical"]',
+        'description': 'Penjualan stabil dengan sedikit peningkatan',
+        'raw_ml_output': '{"predicted_quantity": 43.0, "confidence": 0.90}',
+        'is_significant': 0,
+        'alert_level': null,
+      },
+    ];
+
+    for (final prediction in predictions) {
+      await db.insert('predictions', prediction);
+    }
+  }
+
   Future<void> _insertSampleSalesData(Database db) async {
     final now = DateTime.now();
     final random = Random();
 
-    // Generate sales data for the past 30 days
-    for (int i = 0; i < 30; i++) {
+    // Price map for menu items
+    const menuPrices = {
+      1: 45000.0,
+      2: 35000.0,
+      3: 32000.0,
+      4: 42000.0,
+      5: 38000.0,
+    };
+
+    // Base quantities for menu items
+    const baseQuantities = {
+      1: 60,
+      2: 50,
+      3: 45,
+      4: 35,
+      5: 40,
+    };
+
+    // Generate sales data for the past 180 days (6 months)
+    for (int i = 0; i < 180; i++) {
       final date = now.subtract(Duration(days: i));
 
       // Generate sales for each menu item
-      for (int menuIdx = 1; menuIdx <= 3; menuIdx++) {
-        final quantity = 30 + random.nextInt(40); // 30-70 items
-        final price = menuIdx == 1
-            ? 45000.0
-            : (menuIdx == 2 ? 35000.0 : 32000.0);
+      for (int menuIdx = 1; menuIdx <= 5; menuIdx++) {
+        // Base quantity varies by menu item
+        final baseQuantity = baseQuantities[menuIdx]!;
+
+        // Add variance and weekend boost
+        final weekendBoost = date.weekday >= 6 ? 1.3 : 1.0;
+        final variance = random.nextInt(20) - 10; // -10 to +10
+        final quantity =
+            ((baseQuantity + variance) * weekendBoost).round();
+
+        final price = menuPrices[menuIdx]!;
 
         await db.insert('sales_data', {
           'id': 'sales_${menuIdx}_${date.millisecondsSinceEpoch}',
